@@ -10,6 +10,7 @@ output: github_document
 ```{r}
 library(tidyverse)
 library(dplyr)
+library(readxl)
 ```
 #Problem 1
 ```{r}
@@ -106,3 +107,98 @@ a_train_stations = nyc_transit_reformat |>
 There are `r nrow(a_train_stations)` distinct stations that serve the A train. Of the 60, `r nrow(ada_compliant_a_train_stations)` are ADA complaint.
 
 #Problem 2
+```{r}
+# Mr Trash Wheel sheet
+mr_trash_wheel = read_excel("202309 Trash Wheel Collection Data.xlsx", 
+                             sheet = "Mr. Trash Wheel", 
+                             skip = 1) |>
+  janitor::clean_names() |>
+  filter(!is.na(dumpster)) |>
+  mutate(
+    sports_balls = as.integer(round(sports_balls)), 
+    year = as.character(year),  
+    trash_wheel = "Mr. Trash Wheel"
+  )
+mr_trash_wheel = mr_trash_wheel |>
+  select(where(~ !all(is.na(.))))
+
+view(mr_trash_wheel)
+
+#There are 584 observations and 15 variables in Mr. Trash Wheel Data set. Some of the key variables consist of dumpster, month, year, date, weight tons, volume cubic yards, plastic bottles, polystyrene, cigarette butts, glass bottles, plastic bottles, wrappers, sports balls and homes powered. Extra columns (2)  were accidentally added in the data manipulation process, so I removed them in lines 122-123. 
+
+
+#Professor Trash Wheel sheet
+prof_trash_wheel = read_excel("202309 Trash Wheel Collection Data.xlsx", 
+                               sheet = "Professor Trash Wheel", 
+                               skip = 1) |>
+  janitor::clean_names() |>
+  filter(!is.na(dumpster)) |>
+  mutate(
+     year = as.character(year),  
+    trash_wheel = "Professor Trash Wheel"
+  )
+
+#There are 106 observations and 14 variables. Some of the key variables consist of dumpster, month, year, date, weight tons, volume cubic yards, plastic bottles, polystyrene, cigarette butts, glass bottles, plastic bags, wrappers, home powered, and trash wheel. 
+
+#Gwynnda Trash Wheel sheet
+gwynnda_trash_wheel = read_excel("202309 Trash Wheel Collection Data.xlsx", 
+                                  sheet = "Gwynnda Trash Wheel", 
+                                  skip = 1) |>
+  janitor::clean_names() |>
+  filter(!is.na(dumpster)) |>
+  mutate(
+    year = as.character(year),  
+    trash_wheel = "Gwynnda Trash Wheel"
+  )
+
+#There are 155 observations and 13 variables. Some of the key variables consist of dumpster, month, year, date, weight tons, volume cubic yards, plastic bottles, polystyrene, cigarette butts, plastic bags, wrappers, homes powered, and trash wheel.
+
+# Combine sheets
+trash_wheels_df = 
+  bind_rows(
+  mr_trash_wheel,
+  prof_trash_wheel,
+  gwynnda_trash_wheel
+)
+
+trash_wheels_df = trash_wheels_df |>
+  relocate(trash_wheel, sports_balls, .before = everything()) 
+
+view(trash_wheels_df)
+```
+
+
+```{r}
+#Finding total weight of trash collected by Prof Trash Wheel; I originally came across an error stated "character string is not in a standard unambiguous format", so I converted the date column into the correct formatting. 
+trash_wheels_df =
+  trash_wheels_df |>
+  mutate(date = as.Date(date, format = "%Y-%m-%d")) 
+
+prof_trash_data = 
+  trash_wheels_df |>
+  filter(trash_wheel == "Professor Trash Wheel")
+
+total_weight_prof_trash =
+  prof_trash_data |>
+  summarize(total_weight = sum(weight_tons, na.rm = TRUE))
+
+total_weight_prof_trash
+
+#Finding the total number of cig butts collected by Gwynnda in June of 2022. 
+gwynnda_june2022 = trash_wheels_df |>
+  filter(trash_wheel == "Gwynnda Trash Wheel", 
+         year == 2022, 
+         month == 6)
+
+total_cig_butts = gwynnda_june2022 |>
+  summarize(total_cigarette_butts = sum(cigarette_butts, na.rm = TRUE))
+
+total_cig_butts
+```
+
+The size of the resulting data set, trash_wheels_df is  `r nrow(trash_wheels_df)` and `r ncol(trash_wheels_df). Some of the key variables are trash wheel, sports balls, dumpster, month, year, date, weight tons, volume cubic yards, plastic bottles, polystyrene, cigarette butts, glass bottles, plastic bottles, wrappers and homes powered. 
+The total weight of trash collected by Professor Trash Wheel is 216.
+The total number of cigarette butts collected by Gwynnda in June of 2022 is 0. 
+
+#Problem 3
+```{r}
