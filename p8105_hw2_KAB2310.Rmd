@@ -1,13 +1,108 @@
 ---
-title:"p8105_hw2_KAB2310"
-author: Kamiah Brown
-date: 2024-10-01
+title: "p8105_hw2_KAB2310"
+author: "Kamiah Brown"
+date: "2024-10-01"
 output: github_document
 ---
-## This is my submission for Homework 1.
+## This is my submission for Homework 2.
 
 #Set Up 
 ```{r}
+library(tidyverse)
+library(dplyr)
+```
+#Problem 1
+```{r}
+nyc_transit_df = 
+  read_csv("NYC_Transit_Subway_Entrance_And_Exit_Data.csv", na = c("NA", "", "."))
+```
+#Cleaning data
+```{r}
+nyc_transit_clean = nyc_transit_df |>
+  janitor::clean_names() |>
+  select(
+    line = line, 
+    station = station_name, 
+    name = station_name, 
+    station_latitude = station_latitude, 
+    station_longitude = station_longitude, 
+    route1, route2, route3, route4, route5, route6, route7, route8, route9, route10, route11,
+    entry = entry, 
+    vending = vending, 
+    entrance_type = entrance_type, 
+    ada = ada
+  ) |>
+  
+  unite(routes_served, route1:route11, sep = ", ", na.rm = TRUE) |>
+  mutate(entry = ifelse(entry == "yes", TRUE, FALSE))
+
+nrow(nyc_transit_clean)
+ncol(nyc_transit_clean)
 
 ```
+The nyc transit clean data set has 1868 observations and 10 variables. 
+The data set contain the following variables: line, station, name, station latitude, station longitude, routes served, entry, vending, entrance type and ada. I selected and retained the 10 variables. Additionally, I combined the 11 routes in using the unite() function to create a new column called "route_served". The size of data set is `r nrow(nyc_transit_clean)`  and `r ncol(nyc_transit_clean)`.
+Since each row in the data set corresponds with the correct attribute, I believe the data is tidy. There are no missing variables from previewing the nyc transit clean data set. 
 
+
+#Answer the following questions using these data:
+
+How many distinct stations are there? Note that stations are identified both by name and by line (e.g. 125th St 8th Avenue; 125st Broadway; 125st Lenox); the distinct function may be useful here.
+
+```{r}
+distinct_stations = nyc_transit_clean |>
+  distinct(station, line)
+
+distinct_stations =
+  nrow(distinct_stations)
+
+distinct_stations
+```
+There are 465 distinct stations. 
+
+How many stations are ADA compliant?
+```{r}
+ada_compliant_stations =  nyc_transit_clean |>
+  filter(ada == TRUE) |>
+  distinct(station, line) |> 
+  nrow()
+
+ada_compliant_stations
+```
+There are 84 stations with ADA compliant.
+
+What proportion of station entrances / exits without vending allow entrance?
+```{r}
+without_vending_data = nyc_transit_df |>
+  filter(Vending == "NO")
+
+allow_entry_proportion <- without_vending_data %>%
+  summarise(proportion = mean(Entry == "YES")) %>%
+  pull(proportion)
+
+allow_entry_proportion
+
+```
+37.7% of station entrances or exits that do not have vending machines still allow people to enter the station.
+
+Reformat data so that route number and route name are distinct variables.
+```{r}
+nyc_transit_reformat = nyc_transit_clean |>
+  separate_rows(routes_served, sep = ", ")  
+view (nyc_transit_reformat)
+
+a_train_stations = nyc_transit_reformat |>
+  filter(routes_served == "A") |>
+  distinct(station, line)  
+
+ nrow(a_train_stations)
+ 
+ ada_compliant_a_train_stations = nyc_transit_reformat |>
+  filter(routes_served == "A", ada == TRUE) |>
+  distinct(station, line)
+ 
+ nrow(ada_compliant_a_train_stations)
+```
+There are `r nrow(a_train_stations)` distinct stations that serve the A train. Of the 60, `r nrow(ada_compliant_a_train_stations)` are ADA complaint.
+
+#Problem 2
