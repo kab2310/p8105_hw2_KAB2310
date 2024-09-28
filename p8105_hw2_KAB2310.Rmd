@@ -202,3 +202,27 @@ The total number of cigarette butts collected by Gwynnda in June of 2022 is 0.
 
 #Problem 3
 ```{r}
+bakers = read_csv("bakers.csv")
+bakes = read_csv("bakes.csv")
+results = read_csv("results.csv")
+
+bakers =
+  bakers |> rename(baker = 'Baker Name')
+bakes = 
+  bakes |> rename(baker = 'Baker')
+
+results = results |>
+  select(series, episode, baker, technical, result)
+
+results = results |> 
+  rename(series = `...1`, episode = `...2`, baker = `...3`, technical = `...4`, result = `IN = stayed in; OUT = Eliminated; STAR BAKER = Star Baker; WINNER = Series Winner; Runner-up = Series Runner up; WD = withdrew`)
+
+results = results |>
+  select(series, episode, baker, technical, result) #Error in select
+
+# Merge datasets
+bakeoff_df <- bakes |>
+  left_join(bakers, by = "baker") |>
+  left_join(results, by = c("baker", "series"))
+
+
