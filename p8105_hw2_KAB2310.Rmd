@@ -202,27 +202,61 @@ The total number of cigarette butts collected by Gwynnda in June of 2022 is 0.
 
 #Problem 3
 ```{r}
-bakers = read_csv("bakers.csv")
-bakes = read_csv("bakes.csv")
-results = read_csv("results.csv")
-
-bakers =
-  bakers |> rename(baker = 'Baker Name')
-bakes = 
-  bakes |> rename(baker = 'Baker')
-
-results = results |>
-  select(series, episode, baker, technical, result)
-
-results = results |> 
-  rename(series = `...1`, episode = `...2`, baker = `...3`, technical = `...4`, result = `IN = stayed in; OUT = Eliminated; STAR BAKER = Star Baker; WINNER = Series Winner; Runner-up = Series Runner up; WD = withdrew`)
-
-results = results |>
-  select(series, episode, baker, technical, result) #Error in select
-
-# Merge datasets
-bakeoff_df <- bakes |>
-  left_join(bakers, by = "baker") |>
-  left_join(results, by = c("baker", "series"))
+bakers = read_csv("bakers.csv" ) |>
+  janitor::clean_names() |>
+separate(baker_name, into = c("baker", "baker_last"), sep = " ") 
+    
+bakes = read_csv("bakes.csv", na = c("", "N/A", "Unknown", "UNKNOWN")) |>
+    janitor::clean_names() 
+      
+results = read_csv("results.csv", skip = 2) |>
+      janitor::clean_names() 
 
 
+# Check if there are any discrepancies between datasets
+anti_join(bakers, bakers, by = c("series", "baker")
+
+# Merge datasets and organize 
+bakeoff_df =
+  full_join(results, bakes, by = c("series", "episode", "baker")) |>
+  full_join( x =_, bakers, by = c("series","baker")
+
+head(bakeoff_df)
+
+#Organize variables in meaningful order 
+bakeoff_df =
+  select(episode, series, baker, result, technical, results) |>
+  
+  #Exporting results as CSV file  
+write.csv(bakeoff_df, "bakeoff_cleaned_data.csv", row.names = FALSE) |>
+
+head(bakeoff_df)
+```
+The final data set displays the series, episode, bakers, signature dishes and show stoppers. 
+I had to rename the results variable to ensure that the results dataset display the results of the bake off show.
+ I had selected only the variables that I wanted to display in the bakeoff data set. I wrote the bakeoff data set as a csv file which can be exported. When i review the bake off data frame, there are "NAs" and I am unsure on why that is the case.
+The size of the final dataset is `r nrow(bakeoff_df)`  and `r ncol(bakeoff_df)` . 
+
+
+# showing the star baker or winner of each episode in Seasons 5 through 10
+```{r}
+star_baker_df = 
+  filter(series >= 5, results %in% c("STAR BAKER", "WINNER")) |>
+  select(episode, baker)
+
+view(star_baker_df)
+#No data displayed.
+
+# View the first few rows of the resulting data frame
+head(star_baker_df)
+
+colnames(results)
+colnames(bakes)
+colnames(bakers)
+
+
+colnames(star_baker_df)
+```
+I wasn't able to complete because there were errors. Not sure the issue; went to multiple office hours. 
+
+```{r}
